@@ -35,9 +35,10 @@ const claude = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 });
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY  // for Whisper transcription
-});
+// OpenAI is optional — only needed for voice note transcription
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 // ── CONSTANTS ────────────────────────────────────────────────
 const WA_TOKEN        = process.env.WHATSAPP_TOKEN;
@@ -778,6 +779,11 @@ async function checkoutFlow(convo, userText, from, name, step, ctx) {
 
 // Transcribe audio via Whisper (FIXED v1.1)
 async function transcribeAudio(audioId, from) {
+  // Skip transcription if OpenAI key not configured
+  if (!openai || !process.env.OPENAI_API_KEY) {
+    return 'Voice notes not yet enabled. Please type your message instead. / Tanpri ekri mesaj ou a.';
+  }
+
   try {
     // Step 1: Get the media URL from Meta
     const mediaRes = await fetch(`https://graph.facebook.com/v19.0/${audioId}`, {
